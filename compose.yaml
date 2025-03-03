@@ -1,5 +1,4 @@
 services:
-
   rocksdb:
     image: ubuntu
     container_name: rocksdb
@@ -7,16 +6,83 @@ services:
     volumes:
       - ./rocksdb-data:/var/lib/rocksdb
 
-  kafka:
+  kafka1:
     build:
       context: .
-      dockerfile: dockerfile.kafka  # Custom Dockerfile to install Kafka & Kafka Streams app
-    container_name: kafka
+      dockerfile: dockerfile.kafka
+    container_name: kafka1
+    hostname: kafka1
     ports:
       - "9092:9092"
-      - "8080:8080"  # Expose Kafka Streams app API
+      - "9093:9093"
     env_file:
       - kafka.env
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENERS: CONTROLLER://kafka1:9093,PLAINTEXT://kafka1:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092
     volumes:
-      - ./kafka-data:/var/lib/kafka/data
+      - ./kafka1-data:/var/lib/kafka/data
     restart: unless-stopped
+
+
+  kafka2:
+    build:
+      context: .
+      dockerfile: dockerfile.kafka
+    container_name: kafka2
+    hostname: kafka2
+    ports:
+      - "9094:9092"
+      - "9095:9093"
+    env_file:
+      - kafka.env
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENERS: CONTROLLER://kafka2:9095,PLAINTEXT://kafka2:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9094
+    volumes:
+      - ./kafka2-data:/var/lib/kafka/data
+    restart: unless-stopped
+
+
+  kafka3:
+    build:
+      context: .
+      dockerfile: dockerfile.kafka
+    container_name: kafka3
+    hostname: kafka3
+    ports:
+      - "9096:9092"
+      - "9097:9093"
+    env_file:
+      - kafka.env
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_LISTENERS: CONTROLLER://kafka3:9097,PLAINTEXT://kafka3:9096
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9096
+    volumes:
+      - ./kafka3-data:/var/lib/kafka/data
+    restart: unless-stopped
+
+
+  java-app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: java-app
+    environment:
+      BOOTSTRAP_SERVERS: "kafka1:9092,kafka2:9094,kafka3:9096"
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+
+networks:
+  default:
+    name: app-network
+
+volumes:
+  rocksdb-data:
+  kafka1-data:
+  kafka2-data:
+  kafka3-data:

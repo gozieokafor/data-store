@@ -31,3 +31,18 @@ build/
 
 ### VS Code ###
 .vscode/
+
+## Kafka Data
+kafka-data/
+kafka1-data/
+kafka2-data/
+kafka3-data/
+
+# Ignore logs, build artifacts, and IDE settings
+logs/
+target/
+*.log
+*.class
+node_modules/
+.env
+

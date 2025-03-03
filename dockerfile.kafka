@@ -1,11 +1,11 @@
 # Use Confluent Kafka base image
-FROM confluentinc/cp-kafka:latest
+FROM confluentinc/cp-kafka:7.9.0
 
 # Set working directory
-WORKDIR /app
+WORKDIR /etc/kafka
 
-# Copy Kafka Streams application JAR to the container
-COPY target/kafkastream-0.0.1-SNAPSHOT.jar /app/app.jar
+# Ensure Kafka uses the custom server.properties
+# COPY kafka-config/server.properties /etc/kafka/server.properties
 
-# Start both Kafka & the Kafka Streams app
-CMD ["/bin/sh", "-c", "/etc/confluent/docker/run & java -jar /app/app.jar"]
+# Set up the entrypoint to run Kafka
+CMD ["/etc/confluent/docker/run"]

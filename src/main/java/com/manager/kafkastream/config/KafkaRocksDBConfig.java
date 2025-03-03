@@ -32,10 +32,26 @@ public class KafkaRocksDBConfig {
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        //props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.19.0.4:9092,172.19.0.2:9094,172.19.0.3:9096");
+        String bootstrapServers = System.getenv("BOOTSTRAP_SERVERS");
+        /*if (bootstrapServers == null || bootstrapServers.isEmpty()) {
+            bootstrapServers = "kafka1:9092,kafka2:9094,kafka3:9096"; // Default value
+        }*/
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
+        // Optimized Producer Settings
+        props.put(ProducerConfig.ACKS_CONFIG, "all"); // Ensure all replicas acknowledge
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 65536); // 64 KB batch size
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 10); // Wait 10ms to form larger batches
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4"); // Use LZ4 compression
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);   
+
+        props.put(ProducerConfig.RETRIES_CONFIG, 10); // Retry up to 10 times
+        props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 100); // Wait 100ms before retrying
+        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432); // 32MB buffer memory
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, "optimized-producer");
         return new DefaultKafkaProducerFactory<>(props);
     }
 
@@ -48,7 +64,12 @@ public class KafkaRocksDBConfig {
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        //props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.19.0.4:9092,172.19.0.2:9094,172.19.0.3:9096");
+        String bootstrapServers = System.getenv("BOOTSTRAP_SERVERS");
+        /*if (bootstrapServers == null || bootstrapServers.isEmpty()) {
+            bootstrapServers = "kafka1:9092,kafka2:9094,kafka3:9096"; // Default value
+        }*/
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "kafka-group");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -77,6 +98,6 @@ public class KafkaRocksDBConfig {
     //Kafka Topic Creation (Optional)
     @Bean
     public NewTopic myTopic() {
-        return new NewTopic("input-topic", 1, (short) 1); // 1 partitions, replication factor of 1
+        return new NewTopic("input-topic", 1, (short) 3); // 1 partitions, replication factor of 3
     }
 }
